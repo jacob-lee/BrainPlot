@@ -421,7 +421,8 @@ classdef BrainPlot < handle
                 current = current + 1;
                 subplot(num_subplots, 1, current);
                 if ~isempty(obj.opts.display.scaling)
-                    imagesc(obj.compartments(ii).data', scaling);
+                    imagesc(obj.compartments(ii).data', ...
+                        obj.opts.display.scaling);
                 else
                     imagesc(obj.compartments(ii).data');
                 end
