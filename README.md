@@ -3,12 +3,15 @@
 Creates a plot of an fMRI dataset à la J.D. Power's "The Plot",
 https://doi.org/10.1016/j.neuroimage.2016.08.009
 
+![Example Plot](example_brainplot_small.png)
+
 # Requirements
 
 * SPM version >= 8
 * Matlab version >= 7.6
 
 # Use
+
 
 To use, instantiate an object of the class by passing in a scalar
 `opts` structure with plot parameters, and call the public method
