@@ -1,15 +1,15 @@
 classdef BrainPlot < handle
-    % Creates a plot of an fMRI dataset à la J.D. Power's "The Plot", 
+    % Creates a plot of an fMRI dataset à la J.D. Power's "The Plot",
     % https://doi.org/10.1016/j.neuroimage.2016.08.009
     %
-    % 
+    %
     % To use, instantiate an object of the class by passing in a scalar
     % `opts` structure with plot parameters, and call the public method
     % `make`. An empty opts structure can be obtained by calling the static
     % method `defaults`, and modifying the structure suitably. E.g.,
     %
-    %     % Assume that in the current working directory, we have three 
-    %     % masks: gray_mask.nii, white_mask.nii, and 
+    %     % Assume that in the current working directory, we have three
+    %     % masks: gray_mask.nii, white_mask.nii, and
     %     % csf_mask.nii; a realigment parameters file rp.txt; and our
     %     % SPM.mat.
     %
@@ -30,12 +30,10 @@ classdef BrainPlot < handle
     %                                % to adjust.
     %     opts.spmpath = '/path/to/SPM.mat';
     %     opts.extra(1).data = rp(:,1:3);
-    %     opts.extra(1).xlabel = [];
     %     opts.extra(1).ylabel = 'translation rp';
     %     opts.extra(2).data = rp(:,4:6);
-    %     opts.extra(2).xlabel = [];
     %     opts.extra(2).ylabel = 'rotation rp';
-    % 
+    %
     %     % Instantiate the object, make the plot, and save.
     %     bp = BrainPlot(opts);
     %     bp.make(); % May take a while.
@@ -52,20 +50,20 @@ classdef BrainPlot < handle
             % The scalar opts structure is passed to the constructor, and
             % has the following fields.
             %
-            % brain_vols: fMRI volumes of interest; the data structure 
+            % brain_vols: fMRI volumes of interest; the data structure
             %             returned by `spm_vol`.
             %
             % mask:       mask = struct('vols',[],'labels',[])
-            %             and is scalar. 
+            %             and is scalar.
             % mask.vols:  A structure of nifti volumes, as returned from
-            %             spm_vol, e.g. 
+            %             spm_vol, e.g.
             %             opts.mask.vols = spm_vol(char({'gray_mask.nii'
             %                                            'white_mask.nii'
             %                                            'csf_mask.nii'}))
             % mask.labels A cell array of labels for the masks, e.g.
             %             opts.mask.labels = {'Gray', 'White', 'CSF'};
             %
-            % spmpath:    Leave as [] if not using. Path to your SPM.mat file. 
+            % spmpath:    Leave as [] if not using. Path to your SPM.mat file.
             %             The SPM.mat file is used to adjust data, filter
             %             the data with the SPM's specification, and to
             %             obtain the SPM's whitening matrix.
@@ -75,7 +73,7 @@ classdef BrainPlot < handle
             %
             % adjust:     adjust = struct('adjust', false, contrast, [])
             %             Whether to adjust to a F-contrast of interest
-            %             from the SPM. If not adjusting, the data will be 
+            %             from the SPM. If not adjusting, the data will be
             %             detrended and demeaned.
             % adjust.adjust: truthy value if adjusting for contrast.
             % adjust.contrast: index of F-contrast to adjust for. Columns
@@ -98,31 +96,34 @@ classdef BrainPlot < handle
             %             used by spm_filter. If left as [], then SPM.xX.K
             %             is used.
             %
-            % extra:      extra = struct('data',{}, 'xlabel',{}, 'ylabel',{})
+            % extra:      extra = struct('data',{}, 'ylabel',{})
             %             A possibly zero-length structure array specifying
             %             additional data to plot, e.g. frame-displacement,
             %             or the realignment parameters. For N extra plots,
             %             the structure should have length N.
             % extra.data: nxm matrix, with n records, for m features.
-            % extra.xlabel: xlabel for item
             % extra.ylabel: ylabel for item
-            % 
+            %
             % display:    A structure containing parameters for appearance
             %             of plot, such as background color.
             % display.figure: Is passed to figure(), and contains figure
-            %            Properties, such as Name, NumberTitle, etc. 
-            %            Crucially, it turns off InvertHardCopy, so that 
-            %            saving the figure saves it to file as it appears 
+            %            Properties, such as Name, NumberTitle, etc.
+            %            Crucially, it turns off InvertHardCopy, so that
+            %            saving the figure saves it to file as it appears
             %            on screen.
             % display.text.Color: white by default, since background is
             %            black by default.
+            % display.text.Rotation: 45 by default
+            % display.text.FontSize: 8 by deafult
             % display.scaling: if not empty, specifies a CLIM for the image
             %            map produced by imagesc.
-            % 
+            % display.colormap: colormap for brain plot. 'gray' by default.
+            %
+            %
             % save:      save = structure('savefile',[], 'format',[])
             %            If not empty, will automatically save file using
             %            path `savefile`, optionally with format `format`.
-            %            
+            %
             
             d = struct();
             d.brain.vols = [];
@@ -137,13 +138,16 @@ classdef BrainPlot < handle
             d.whiten.whiten = false;
             d.whiten.W = [];
             % the {} forces a zero length structure:
-            d.extra = struct('data', {}, 'xlabel', {}, 'ylabel', {});
+            d.extra = struct('data', {}, 'ylabel', {});
             d.display.figure.Name = 'Compartment Plot';
             d.display.figure.NumberTitle = 'on';
             d.display.figure.InvertHardCopy = 'off';
             d.display.figure.Color = 'black';
             d.display.text.Color = 'white';
+            d.display.text.Rotation = 45;
+            d.display.text.FontSize = 8;
             d.display.scaling = [];
+            d.display.colormap = 'gray';
             d.save.savefile = [];
             d.save.format = [];
         end
@@ -213,7 +217,7 @@ classdef BrainPlot < handle
         
         function make(obj)
             % Call this method to load the brain data and construct the
-            % plot. 
+            % plot.
             obj.parse_opts();
             obj.XYZ = BrainPlot.get_xyz(obj.opts.brain.vols(1).dim);
             obj.make_compartments();
@@ -233,7 +237,7 @@ classdef BrainPlot < handle
             % Args:
             %   savefile: filepath to save plot. If not specified, then
             %             looks for filename in opts.save.savefile.
-            %   
+            %
             %   format:   format argument, as used by `saveas`.
             %             If not specified, uses opts.save.format.
             %
@@ -345,7 +349,7 @@ classdef BrainPlot < handle
                     if isempty(obj.opts.whiten.W)
                         W = obj.SPM.xX.W;
                     else
-                        W = obj.opts.whten.W;
+                        W = obj.opts.whiten.W;
                     end
                     whitened = W * obj.compartments(ii).data;
                     obj.compartments(ii).data = whitened;
@@ -395,45 +399,106 @@ classdef BrainPlot < handle
                     prediction = r' * betas;
                     obj.compartments(ii).data = obj.compartments(ii).data - ...
                         prediction;
-                end                
+                end
+                
+                % Now transpose because that's how we're going to plot it
+                obj.compartments(ii).data = obj.compartments(ii).data';
             end
         end
         
         function obj = create_image(obj)
             % Creates the figure;
+            
             f = figure(obj.opts.display.figure);
             hold on;
             num_subplots = numel(obj.opts.extra) + numel(obj.compartments);
+            
+            % Plot `extra` data
+            % -----------------
             current = 0;
             for ii = 1 : numel(obj.opts.extra)
                 current = current + 1;
-                subplot(num_subplots, 1, ii);
+                p(current) = subplot(num_subplots, 1, ii);
                 plot(obj.opts.extra(ii).data);
-                xlabel(obj.opts.extra(ii).xlabel, ...
-                    'Color',obj.opts.display.text.Color);
-                ylabel(obj.opts.extra(ii).ylabel, ...
-                    'Color',obj.opts.display.text.Color);
-                set(gca, 'ytick',[])
-                set(gca, 'yticklabel',[])
+                ax = ylabel(obj.opts.extra(ii).ylabel);
+                flds = fields(obj.opts.display.text);
+                for jj = 1 : numel(flds)
+                    set(ax, flds{jj}, obj.opts.display.text.(flds{jj}));
+                end
+                set(p(current), 'ytick',[])
+                set(p(current), 'yticklabel',[])
             end
-            colormap('gray');
+            
+            % Plot brain voxels
+            % -----------------
+            numrows = nan(numel(obj.compartments),1);
+            for ii = 1 : numel(obj.compartments)
+                numrows(ii) = size(obj.compartments(ii).data, 1);
+            end
+            total_numrows = sum(numrows);
+            if ~isempty(obj.opts.display.scaling)
+                scaling = obj.opts.display.scaling;
+            else
+                scaling = obj.get_scale();
+            end
+            colormap(obj.opts.display.colormap);
             for ii = 1 : numel(obj.compartments)
                 current = current + 1;
-                subplot(num_subplots, 1, current);
-                if ~isempty(obj.opts.display.scaling)
-                    imagesc(obj.compartments(ii).data', ...
-                        obj.opts.display.scaling);
-                else
-                    imagesc(obj.compartments(ii).data');
+                p(current) = subplot(num_subplots, 1, current);
+                imagesc(obj.compartments(ii).data, scaling);
+                set(p(current), 'xtick',[])
+                set(p(current), 'ytick',[])
+                set(p(current), 'yticklabel',[])
+                set(p(current), 'XColor', 'black')
+                set(p(current), 'YColor', 'black')
+                set(p(current), 'LineWidth', 5)
+                ax = ylabel(obj.opts.mask.labels{ii});
+                flds = fields(obj.opts.display.text);
+                for jj = 1 : numel(flds)
+                    set(ax, flds{jj}, obj.opts.display.text.(flds{jj}))
                 end
-                ylabel(obj.opts.mask.labels{ii}, ...
-                    'Color',obj.opts.display.text.Color);
-                set(gca, 'ytick',[])
-                set(gca, 'yticklabel',[])
+            end
+            
+            % Scale plots to better use space
+            % -------------------------------
+            vertical_margin = 0.025;
+            horizontal_margin = 0.075;
+            extra_top = 1 - vertical_margin;
+            extra_bottom = 0.85;
+            left = 0 + horizontal_margin;
+            width = 1 - 2 * horizontal_margin;
+            brain_top = extra_bottom - vertical_margin;
+            brain_bottom = vertical_margin;
+            brain_height = brain_top - brain_bottom;
+            
+            % Scale extra plots to fit top part of page
+            bottom_pos = linspace(extra_top, extra_bottom, ...
+                numel(obj.opts.extra)+1);
+            for ii = 1 : numel(obj.opts.extra)
+                set(p(ii), 'Position', [left, bottom_pos(ii+1), ...
+                    width, bottom_pos(ii)-bottom_pos(ii+1)]);
+            end
+            
+            % Scale each brain subplot, but ensure minimum height
+            min_height = 0.05;
+            height = max((numrows / total_numrows) * brain_height, min_height);
+            height = (height ./ sum(height)) * brain_height;
+            bottom = brain_top - cumsum(height);
+            for ii = 1:numel(obj.compartments)
+                set(p(ii+numel(obj.opts.extra)), ...
+                    'Position', [left, bottom(ii), width, height(ii)]);
             end
             hold off;
             obj.fig = f;
             obj.fig_properties = get(obj.fig);
+        end
+        
+        function scaling = get_scale(obj)
+            data = [];
+            for ii = 1 : numel(obj.compartments)
+                data = cat(1, data, obj.compartments(ii).data(:));
+            end
+            scaling = [mean(data) - std(data), mean(data) + std(data)];
         end
     end
 end
