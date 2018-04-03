@@ -12,7 +12,6 @@ https://doi.org/10.1016/j.neuroimage.2016.08.009
 
 # Use
 
-
 To use, instantiate an object of the class by passing in a scalar
 `opts` structure with plot parameters, and call the public method
 `make`. An empty opts structure can be obtained by calling the static
@@ -38,10 +37,8 @@ parameters file rp.txt; and our SPM.mat.
     opts.adjust.contrast = 5;  % We will use an F-contrast indexed 5 to adjust.
     opts.spmpath = '/path/to/SPM.mat';
     opts.extra(1).data = rp(:,1:3);
-    opts.extra(1).xlabel = [];
     opts.extra(1).ylabel = 'translation rp';
     opts.extra(2).data = rp(:,4:6);
-    opts.extra(2).xlabel = [];
     opts.extra(2).ylabel = 'rotation rp';
 
     % Instantiate the object, make the plot, and save.
